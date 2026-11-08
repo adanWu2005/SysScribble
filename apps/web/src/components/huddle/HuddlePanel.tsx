@@ -14,7 +14,7 @@ import {
 } from '@livekit/components-react';
 import type { LivekitTokenResponse } from '@wb/shared';
 import { Track, RoomEvent } from 'livekit-client';
-import { Headphones, Mic, MicOff, PhoneOff, Video } from 'lucide-react';
+import { Headphones, Maximize2, Mic, MicOff, Minimize2, PhoneOff, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ApiClientError, apiFetch } from '@/lib/fetcher';
 import { clearSpeakers, setSpeakers, useSpeakingIds } from '@/lib/huddle/speaking';
@@ -36,7 +36,7 @@ function SpeakingBridge() {
   return null;
 }
 
-function VideoGrid({ canPublish }: { canPublish: boolean }) {
+function VideoGrid({ canPublish, expanded }: { canPublish: boolean; expanded: boolean }) {
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -45,16 +45,14 @@ function VideoGrid({ canPublish }: { canPublish: boolean }) {
     { onlySubscribed: false },
   );
   return (
-    <div className="mb-2 h-64 w-[min(28rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-neutral-900 shadow-xl">
-      <div className="flex h-full flex-col">
-        <GridLayout tracks={tracks} className="min-h-0 flex-1">
-          <ParticipantTile />
-        </GridLayout>
-        <ControlBar
-          variation="minimal"
-          controls={{ microphone: false, camera: canPublish, screenShare: canPublish, chat: false, leave: false }}
-        />
-      </div>
+    <div className={`flex flex-col bg-black ${expanded ? 'min-h-0 flex-1' : 'h-48'}`}>
+      <GridLayout tracks={tracks} className="min-h-0 flex-1">
+        <ParticipantTile />
+      </GridLayout>
+      <ControlBar
+        variation="minimal"
+        controls={{ microphone: false, camera: canPublish, screenShare: canPublish, chat: false, leave: false }}
+      />
     </div>
   );
 }
@@ -100,11 +98,26 @@ function Roster() {
   );
 }
 
+/**
+ * The huddle is a box in the bottom-right corner: who is in it, the video when it is open, and the
+ * controls. The expand button turns the box into a full-screen view; Escape or the same button returns.
+ */
 function HuddleBar({ canPublish }: { canPublish: boolean }) {
   const room = useRoomContext();
   const { isMicrophoneEnabled, localParticipant } = useLocalParticipant();
   const [videoOpen, setVideoOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
+  const full = videoOpen && expanded;
+
+  useEffect(() => {
+    if (!full) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpanded(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [full]);
 
   async function toggleMic() {
     setMicError(null);
@@ -116,51 +129,71 @@ function HuddleBar({ canPublish }: { canPublish: boolean }) {
   }
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 flex flex-col items-center px-4">
-      {videoOpen ? (
-        <div className="pointer-events-auto">
-          <VideoGrid canPublish={canPublish} />
-        </div>
-      ) : null}
+    <div className={`pointer-events-none fixed z-40 ${full ? 'inset-3' : 'bottom-4 right-4'}`}>
       <div
         role="region"
         aria-label="Huddle"
-        className="pointer-events-auto flex max-w-full flex-wrap items-center gap-2 rounded-full bg-neutral-900/95 py-1.5 pl-2 pr-1.5 text-white shadow-xl backdrop-blur"
+        className={`pointer-events-auto flex flex-col overflow-hidden rounded-2xl bg-neutral-900/95 text-white shadow-2xl backdrop-blur ${
+          full ? 'h-full w-full' : 'w-[min(22rem,calc(100vw-2rem))]'
+        }`}
       >
-        <Roster />
-        {canPublish ? (
+        <div className="flex items-center gap-2 px-3 py-2">
+          <div className="min-w-0 flex-1">
+            <Roster />
+          </div>
+          {videoOpen ? (
+            <button
+              type="button"
+              aria-label={expanded ? 'Exit full screen' : 'Full screen'}
+              title={expanded ? 'Exit full screen (Esc)' : 'Full screen'}
+              onClick={() => setExpanded((open) => !open)}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            >
+              {expanded ? <Minimize2 size={15} aria-hidden /> : <Maximize2 size={15} aria-hidden />}
+            </button>
+          ) : null}
+        </div>
+
+        {videoOpen ? <VideoGrid canPublish={canPublish} expanded={full} /> : null}
+
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+          {canPublish ? (
+            <button
+              type="button"
+              aria-pressed={isMicrophoneEnabled}
+              onClick={() => void toggleMic()}
+              className={`${buttonClass} ${isMicrophoneEnabled ? 'bg-white/15 hover:bg-white/25' : 'bg-red-600 hover:bg-red-700'}`}
+            >
+              {isMicrophoneEnabled ? <Mic size={15} aria-hidden /> : <MicOff size={15} aria-hidden />}
+              {isMicrophoneEnabled ? 'Mute' : 'Unmute'}
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2 text-xs text-neutral-300">
+              <Headphones size={14} aria-hidden /> Listening
+            </span>
+          )}
           <button
             type="button"
-            aria-pressed={isMicrophoneEnabled}
-            onClick={() => void toggleMic()}
-            className={`${buttonClass} ${isMicrophoneEnabled ? 'bg-white/15 hover:bg-white/25' : 'bg-red-600 hover:bg-red-700'}`}
+            aria-pressed={videoOpen}
+            onClick={() => {
+              setVideoOpen((open) => !open);
+              setExpanded(false);
+            }}
+            className={`${buttonClass} ${videoOpen ? 'bg-white/25' : 'bg-white/10 hover:bg-white/20'}`}
           >
-            {isMicrophoneEnabled ? <Mic size={15} aria-hidden /> : <MicOff size={15} aria-hidden />}
-            {isMicrophoneEnabled ? 'Mute' : 'Unmute'}
+            <Video size={15} aria-hidden />
+            Video
           </button>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 px-2 text-xs text-neutral-300">
-            <Headphones size={14} aria-hidden /> Listening
-          </span>
-        )}
-        <button
-          type="button"
-          aria-pressed={videoOpen}
-          onClick={() => setVideoOpen((open) => !open)}
-          className={`${buttonClass} ${videoOpen ? 'bg-white/25' : 'bg-white/10 hover:bg-white/20'}`}
-        >
-          <Video size={15} aria-hidden />
-          Video
-        </button>
-        <button type="button" onClick={() => void room.disconnect()} className={`${buttonClass} bg-red-600 hover:bg-red-700`}>
-          <PhoneOff size={15} aria-hidden />
-          Leave
-        </button>
-        {micError ? (
-          <span role="alert" className="px-2 text-xs text-red-300">
-            {micError}
-          </span>
-        ) : null}
+          <button type="button" onClick={() => void room.disconnect()} className={`${buttonClass} ml-auto bg-red-600 hover:bg-red-700`}>
+            <PhoneOff size={15} aria-hidden />
+            Leave
+          </button>
+          {micError ? (
+            <span role="alert" className="w-full text-xs text-red-300">
+              {micError}
+            </span>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -215,6 +248,9 @@ export function HuddlePanel({ roomId }: { roomId: string }) {
         setSession(null);
       }}
       data-lk-theme="default"
+      // LiveKit's wrapper is a full-width black box. It only provides context and theme variables, so it
+      // must not take up any space in the page; the huddle box is fixed to the corner.
+      style={{ display: 'contents' }}
     >
       <SpeakingBridge />
       <RoomAudioRenderer />
