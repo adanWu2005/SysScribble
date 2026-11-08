@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { appOrigin } from '@/lib/appOrigin';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -20,8 +21,8 @@ export async function GET(req: NextRequest): Promise<Response> {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL(next, url.origin));
+      return NextResponse.redirect(new URL(next, appOrigin()));
     }
   }
-  return NextResponse.redirect(new URL('/login?error=auth', url.origin));
+  return NextResponse.redirect(new URL('/login?error=auth', appOrigin()));
 }
