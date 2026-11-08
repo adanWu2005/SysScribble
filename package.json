@@ -8,7 +8,7 @@
     "apps/*"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": "22.x"
   },
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -18,6 +18,7 @@
     "dev:web": "npm run dev -w apps/web",
     "dev:ws": "npm run dev -w apps/ws-server",
     "test:chaos": "npm run test:chaos -w apps/ws-server",
-    "audit:bundle": "node scripts/audit-bundle.mjs"
+    "audit:bundle": "node scripts/audit-bundle.mjs",
+    "heroku-postbuild": "node scripts/heroku-postbuild.mjs"
   }
 }
