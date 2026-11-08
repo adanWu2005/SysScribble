@@ -1,0 +1,23 @@
+{
+  "name": "whiteboard-project",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Collaborative real-time notes & whiteboard platform (Yjs + custom WebSocket server + Supabase + Upstash)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:ws": "npm run dev -w apps/ws-server",
+    "test:chaos": "npm run test:chaos -w apps/ws-server",
+    "audit:bundle": "node scripts/audit-bundle.mjs"
+  }
+}

@@ -1,0 +1,396 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --arc-bg: #4a3fe8;
+  --arc-band: #2812a8;
+}
+html.dark {
+  --arc-bg: #190f66;
+  --arc-band: #0d0638;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), ui-rounded, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* The vivid, grainy blue page behind the app. Content sits on white (or deep indigo) surfaces on top of it. */
+.arc-backdrop {
+  background-color: var(--arc-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* A band with scalloped top and bottom edges, like the wavy borders on the reference. */
+.arc-band {
+  position: relative;
+  background-color: var(--arc-band);
+}
+.arc-band::before,
+.arc-band::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background-size: 24px 12px;
+  background-repeat: repeat-x;
+  pointer-events: none;
+}
+.arc-band::before {
+  top: -11px;
+  background-image: radial-gradient(circle at 12px 12px, var(--arc-band) 11.5px, transparent 12px);
+}
+.arc-band::after {
+  bottom: -11px;
+  background-image: radial-gradient(circle at 12px 0, var(--arc-band) 11.5px, transparent 12px);
+}
+
+@layer components {
+  .arc-btn {
+    @apply inline-flex items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-indigo-900 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white;
+  }
+  .arc-btn-dark {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-125 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white;
+    background-color: var(--arc-band);
+  }
+  .arc-btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white;
+  }
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* Other people's carets and selections in the notes. The names are drawn as plain text. */
+.collaboration-carets__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 2px solid;
+  border-right: 0;
+  word-break: normal;
+  pointer-events: none;
+}
+
+.collaboration-carets__label {
+  position: absolute;
+  top: -1.55em;
+  left: -2px;
+  padding: 1px 5px;
+  border-radius: 4px 4px 4px 0;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #fff;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ---- Notes editor. There is no typography plugin, so every block is styled here. ---- */
+
+.notes-prose {
+  --notes-text: #1f2937;
+  --notes-muted: #9ca3af;
+  --notes-border: #e5e7eb;
+  --notes-code-bg: #f3f4f6;
+  --notes-mark: #fde68a;
+  --notes-callout-bg: #eff6ff;
+  --notes-callout-border: #bfdbfe;
+  --notes-accent: #2563eb;
+  min-height: 40vh;
+  padding-bottom: 30vh;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--notes-text);
+}
+
+.dark .notes-prose {
+  --notes-text: #e5e7eb;
+  --notes-muted: #6b7280;
+  --notes-border: #374151;
+  --notes-code-bg: #1f2937;
+  --notes-mark: #854d0e;
+  --notes-callout-bg: #172554;
+  --notes-callout-border: #1e40af;
+  --notes-accent: #60a5fa;
+}
+
+.notes-prose > * + * {
+  margin-top: 0.35em;
+}
+
+.notes-prose h1 {
+  margin-top: 1.4em;
+  font-size: 1.875em;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.notes-prose h2 {
+  margin-top: 1.2em;
+  font-size: 1.5em;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.notes-prose h3 {
+  margin-top: 1em;
+  font-size: 1.2em;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.notes-prose ul,
+.notes-prose ol {
+  padding-left: 1.5rem;
+}
+.notes-prose ul {
+  list-style: disc;
+}
+.notes-prose ol {
+  list-style: decimal;
+}
+.notes-prose li > p {
+  margin: 0;
+}
+
+.notes-prose ul[data-type='taskList'] {
+  padding-left: 0.25rem;
+  list-style: none;
+}
+.notes-prose ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.notes-prose ul[data-type='taskList'] li > label {
+  flex: none;
+  margin-top: 0.3em;
+  user-select: none;
+}
+.notes-prose ul[data-type='taskList'] li > div {
+  flex: 1;
+  min-width: 0;
+}
+.notes-prose ul[data-type='taskList'] li[data-checked='true'] > div {
+  color: var(--notes-muted);
+  text-decoration: line-through;
+}
+.notes-prose ul[data-type='taskList'] input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--notes-accent);
+  cursor: pointer;
+}
+
+.notes-prose code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--notes-code-bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+.notes-prose pre {
+  margin-top: 0.6em;
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--notes-code-bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+.notes-prose pre code {
+  padding: 0;
+  background: none;
+}
+
+.notes-prose mark {
+  padding: 0.05em 0.15em;
+  border-radius: 3px;
+  background: var(--notes-mark);
+  color: inherit;
+}
+
+.notes-prose blockquote {
+  padding-left: 1rem;
+  border-left: 3px solid var(--notes-border);
+  color: var(--notes-muted);
+}
+
+.notes-prose hr {
+  margin: 1.2em 0;
+  border: 0;
+  border-top: 1px solid var(--notes-border);
+}
+
+.notes-prose a {
+  color: var(--notes-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.notes-prose .callout {
+  margin-top: 0.6em;
+  padding: 0.6rem 0.9rem 0.6rem 2.4rem;
+  position: relative;
+  border: 1px solid var(--notes-callout-border);
+  border-radius: 8px;
+  background: var(--notes-callout-bg);
+}
+.notes-prose .callout::before {
+  content: 'i';
+  position: absolute;
+  left: 0.8rem;
+  top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 9999px;
+  background: var(--notes-accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+}
+
+/* A badge that points at a shape on the whiteboard. */
+.notes-prose .shape-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 18rem;
+  margin: 0 0.1rem;
+  padding: 0 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--notes-callout-border);
+  border-radius: 9999px;
+  background: var(--notes-callout-bg);
+  color: var(--notes-accent);
+  font-size: 0.85em;
+  font-weight: 500;
+  line-height: 1.6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: baseline;
+  cursor: pointer;
+  user-select: none;
+}
+.notes-prose .shape-ref::before {
+  content: '';
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+}
+.notes-prose .shape-ref:hover,
+.notes-prose .shape-ref.ProseMirror-selectednode {
+  border-color: var(--notes-accent);
+}
+
+/* The prompt text TipTap puts in an empty block. */
+.notes-prose .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--notes-muted);
+  pointer-events: none;
+}
+
+/* The history drawer slides in from the right, unless the user asked for less motion. */
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-panel {
+  animation: drawer-in 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-panel {
+    animation: none;
+  }
+}
+
+/* Emoji reactions rise and fade. With reduced motion they only fade, in place. */
+@keyframes reaction-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -12px) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -90px) scale(1);
+  }
+}
+
+.reaction-float {
+  animation: reaction-float 2.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes reaction-fade {
+    0%,
+    70% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  .reaction-float {
+    animation: reaction-fade 2.5s linear forwards;
+    transform: translate(-50%, -20px);
+  }
+}
+
+/* Pages and the sign-in/sign-up switch fade in rather than snapping. Opacity only, so fixed-position
+   dialogs inside a page keep working. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-enter {
+  animation: page-enter 280ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
