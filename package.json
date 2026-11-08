@@ -19,6 +19,7 @@
     "dev:ws": "npm run dev -w apps/ws-server",
     "test:chaos": "npm run test:chaos -w apps/ws-server",
     "audit:bundle": "node scripts/audit-bundle.mjs",
-    "heroku-postbuild": "node scripts/heroku-postbuild.mjs"
+    "heroku-postbuild": "node scripts/heroku-postbuild.mjs",
+    "start": "node scripts/heroku-start.mjs"
   }
 }
