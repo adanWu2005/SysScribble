@@ -1,7 +1,7 @@
 import type { ApiErrorCode } from '@wb/shared';
 import { NextResponse, type NextRequest } from 'next/server';
 import { ZodError, type ZodTypeAny, type z } from 'zod';
-import { publicEnv } from '@/lib/env';
+import { appOrigin } from '@/lib/appOrigin';
 
 export class ApiError extends Error {
   override readonly name = 'ApiError';
@@ -38,11 +38,13 @@ const SAFE_METHODS: ReadonlySet<string> = new Set(['GET', 'HEAD', 'OPTIONS']);
 /**
  * CSRF defence in depth behind SameSite=Lax cookies. Browsers always send Origin on a
  * cross-site write. Non-browser clients omit it but have no ambient cookies to abuse.
+ * The configured address is reduced to its origin first, so a trailing slash in the setting cannot
+ * make every legitimate request look cross-origin.
  */
 function assertSameOrigin(req: NextRequest): void {
   if (SAFE_METHODS.has(req.method)) return;
   const origin = req.headers.get('origin');
-  if (origin && origin !== publicEnv.NEXT_PUBLIC_APP_URL) {
+  if (origin && origin !== appOrigin()) {
     throw new ApiError(403, 'FORBIDDEN', 'Cross-origin request refused');
   }
 }

@@ -24,6 +24,23 @@ describe('route()', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it('still allows same-origin writes when the configured address has a trailing slash', async () => {
+    const before = process.env['NEXT_PUBLIC_APP_URL'];
+    vi.resetModules();
+    process.env['NEXT_PUBLIC_APP_URL'] = 'https://app.example.com/';
+    try {
+      const { route: freshRoute } = await import('@/lib/api');
+      const ok = await freshRoute(async () => new Response('ok'))(request('POST', { origin: 'https://app.example.com' }), ctx);
+      expect(ok.status).toBe(200);
+      const bad = await freshRoute(async () => new Response('ok'))(request('POST', { origin: 'https://evil.example' }), ctx);
+      expect(bad.status).toBe(403);
+    } finally {
+      if (before === undefined) delete process.env['NEXT_PUBLIC_APP_URL'];
+      else process.env['NEXT_PUBLIC_APP_URL'] = before;
+      vi.resetModules();
+    }
+  });
+
   it('allows same-origin writes and originless API clients', async () => {
     const handler = vi.fn(async () => new Response('ok'));
     expect((await route(handler)(request('POST', { origin: 'http://localhost:3000' }), ctx)).status).toBe(200);
