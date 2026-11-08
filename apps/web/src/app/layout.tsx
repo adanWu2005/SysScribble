@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   return (
     // The theme class is set by the script before React hydrates, so the two can differ here.
-    <html lang="en" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning className={`${display.variable} ${body.variable}`}>
       <head>
         {/* A constant, with no user input in it: it applies the saved theme before the first paint. */}
         <script nonce={nonce} suppressHydrationWarning>

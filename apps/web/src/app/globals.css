@@ -394,3 +394,10 @@ body {
     animation: none;
   }
 }
+
+/* In-page links (like "See Features") glide to their target instead of jumping. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
